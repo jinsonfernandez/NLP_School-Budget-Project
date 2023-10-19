@@ -1,0 +1,59 @@
+{% for iname, idata in interface.items() %}
+    interface {{iname}}
+    description {{idata.description}}
+    {% if idata.ipv4_address is defined %}
+        ip address {{idata.ipv4_address}}
+    {% endif %}
+{% endfor %}
+
+```
+interfaces:
+  Ethernet1:
+    description: capture-port
+  Ethernet2:
+    description: leaf01-eth51
+        ipv4_address: 10.50.0.0/31
+
+And this is how Jinja2 will render this, with all settings left to defaults:
+
+
+interface Ethernet1
+ description capture-port
+  
+
+interface Ethernet2
+ description leaf01-eth51
+  
+ ip address 10.50.0.0/31
+```
+
+```
+Controlling Jinja2 Whitespaces
+Enable one of, or both, trim_blocks and lstrip_blocks rendering options.
+Manually strip whitespaces by adding a minus sign - to the start or end of the block.
+Apply indentation inside of Jinja2 blocks
+```
+
+
+# Same code as above but now with manual Controlling
+{% for iname, idata in interfaces.items() -%}
+interface {{ iname }}
+ description {{ idata.description }}
+  {%- if idata.ipv4_address is defined %}
+ ip address {{ idata.ipv4_address }}
+  {%- endif %}
+{% endfor %}
+
+# Indentation Inside Of Jinja2 Blocks
+{% for acl, acl_lines in access_list.items() %}
+ip access list {{acl}}
+{%  for line in acl_lines %}
+{%      if line.action == 'remark' %}
+remark {{line.text}}
+{%      elif line.action == 'permit' %}
+permit {{line.src}} {{line.dst}}
+{%      else %}
+defualt nothing to show
+{%      endif %}
+{%  endfor %}
+{% endfor %}

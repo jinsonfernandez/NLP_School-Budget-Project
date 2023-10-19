@@ -1,0 +1,62 @@
+{
+    "interfaces": {
+        "Loopback0": {
+            "description": "Management plane traffic",
+            "ipv4_address": "10.255.255.34/32"
+        },
+        "Management1": {
+            "description": "Management interface",
+            "ipv4_address": "10.10.0.5/24"
+        },
+        "Ethernet1": {
+            "description": "Span port - SPAN1"
+        },
+        "Ethernet2": {
+            "description": "PortChannel50 - port 1"
+        },
+        "Ethernet51": {
+            "description": "leaf01-eth51",
+            "ipv4_address": "10.50.0.0/31"
+        },
+        "Ethernet52": {
+            "description": "leaf02-eth51",
+            "ipv4_address": "10.50.0.2/31"
+        }
+    }
+}
+
+{% for intf, idata in interfaces.items() if idata.ipv4_address is defined -%}
+    {{intf}} - {{idata.description}} : {{idata.ipv4_address}}
+{% endfor %}
+
+```
+Loopback0 - Management plane traffic: 10.255.255.34/32
+Management1 - Management interface: 10.10.0.5/24
+Ethernet51 - leaf01-eth51: 10.50.0.0/31
+Ethernet52 - leaf02-eth51: 10.50.0.2/31
+```
+
+{% for intf, idata in interfaces.items() %}
+
+    {%- if idata.ipv4_address is not defined -%}
+        {{ intf }} - {{ idata.description }}: No IPv4 address configure
+   
+    {%- elif idata.ipv4_address is defined -%}
+        {{intf}} - {{idata.description}} : {{idata.ipv4_address}}
+    
+    {%- else -%}
+        No default, Nothing to print
+    {%- endif -%}
+
+{% endfor %}
+
+# In Operator
+{% if 'Loopback0' in interfaces -%}
+    sflow source-interface Loopback0
+    snmp-server source-interface Loopback0
+    ip radius source-interface Loopback0
+{%- else %}
+    sflow source-interface Management1
+    snmp-server source-interface Management1
+    ip radius source-interface Management1
+{% endif %}

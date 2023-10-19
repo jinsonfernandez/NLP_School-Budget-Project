@@ -1,0 +1,32 @@
+# Jinja2 filter is something we use to transform data held in variables. 
+We apply filters by placing pipe symbol | after the variable followed by name of the filter.
+
+First name: {{ first_name | capitalize }}
+
+```
+name_servers:
+  - 1.1.1.1
+  - 8.8.8.8
+  - 9.9.9.9
+  - 8.8.4.4
+  ```
+ip name-server {{ name_servers | join(" ") }}
+
+```
+Result
+ip name-server 1.1.1.1 8.8.8.8 9.9.9.9 8.8.4.4
+```
+
+############################################################################################################################
+
+Chaining Filters
+
+Data:
+scraped_acl:
+  - "   10 permit ip 10.0.0.0/24 10.1.0.0/24"
+  - "   20 deny ip any any"
+
+{{ scraped_acl | first | trim }}
+
+Result:
+10 permit ip 10.0.0.0/24 10.1.0.0/24

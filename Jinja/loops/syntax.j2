@@ -1,0 +1,86 @@
+                                https://datacoves.com/post/dbt-jinja-cheat-sheet
+#############################################################################################################################################
+# Syntax
+{%- for item in my_iterable -%}
+  --Do something with item
+  {{ item }}
+{%- endfor -%}
+
+#############################################################################################################################################
+# loop.last	
+# This boolean is False unless the current iteration is the last iteration.         
+{% for item in list %}
+  {% if loop.last %}   
+    --This is the last item
+    {{ item }}
+  {% endif %}
+{% endfor %}
+
+#############################################################################################################################################
+# loop.first	
+# A boolean that is True if the current iteration is the first iteration, otherwise False.
+{% for item in list %}
+  {% if loop.first %}
+    --first item
+    {{ item }}
+  {% endif %}
+{% endfor %}
+
+#############################################################################################################################################
+# loop.index	
+# An integer representing the current iteration of the loop (1-indexed). So, the first iteration would have loop.index of 1, the second would be 2, and so on.
+{% for item in list %}
+   --This is item number
+   {{ loop.index }}
+{% endfor %}
+
+#############################################################################################################################################
+
+# Looping a List	
+{% set rating_categories = ["quality_rating", "design_rating", "usability_rating"] %}
+
+SELECT product_id,
+ {%- for col_name in rating_categories -%}
+   AVG({{ col_name }}) as {{ column_name }}_average
+   {%- if not loop.last  -%} 
+     , 
+   {%- endif -%}
+ {%- endfor -%}
+ FROM product_reviews
+ GROUP BY 1
+
+
+# Compiled code
+SELECT product_id,
+   AVG(quality_rating) as quality_rating_average,
+   AVG(design_rating) as design_rating_average,
+   AVG(usability_rating) as usability_rating_average
+FROM product_reviews
+GROUP BY 1
+
+#############################################################################################################################################
+# Looping a Dictionary	
+{% set delivery_type_dict = {"a": "digital_download",
+                             "b": "physical_copy"} %}
+
+SELECT order_id,
+{%- for type, column_name in delivery_type_dict.items() -%}
+COUNT(CASE 
+      WHEN delivery_method = '{{ type }}' THEN order_id 
+      END) as {{ column_name }}_count
+      {%- if not loop.last  -%}
+       , 
+      {%- endif -%}
+      {%- endfor -%}
+FROM order_deliveries
+GROUP BY 1
+
+SELECT order_id,
+COUNT(CASE 
+      WHEN delivery_method = 'a' THEN order_id 
+      END) as digital_download_count,
+COUNT(CASE 
+      WHEN delivery_method = 'b' THEN order_id 
+      END) as physical_copy_count
+FROM order_deliveries
+GROUP BY 1

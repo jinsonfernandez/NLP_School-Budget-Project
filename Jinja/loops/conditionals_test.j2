@@ -1,0 +1,169 @@
+Syntax
+{%- if target.name == 'dev' -%}
+{{ some code }}
+{%- elif target.name == 'prod' -%}
+{{ some other code }}
+{%- else -%}
+{{ some other code }}
+{%- endif -%}
+
+Data:
+    Device running BGP:
+        hostname: router-w-bgp
+        routing_protocol: bgp
+
+        interfaces:
+        Loopback0: 
+            ip: 10.0.0.1
+            mask: 32
+
+        bgp:
+        as: 65001
+
+    Device running OSPF:
+        hostname: router-w-ospf
+        routing_protocol: ospf
+
+        interfaces:
+        Loopback0:
+            ip: 10.0.0.2
+            mask: 32
+
+        ospf:
+        pid: 1
+
+    Device with default route only:
+        hostname: router-w-defgw
+
+        interfaces:
+        Ethernet1:
+            ip: 10.10.0.10
+            mask: 24
+
+        default_nh: 10.10.0.1
+
+
+hostname {{hostname}}
+
+{% for k, v in interfaces.items() %}
+    interfaces {{k}}
+    ip address {{v.ip}}/{{v.mask}}
+{{%% endfor %}}
+
+{% if routing_protocol == 'bgp' %}
+router bgp {{bgp.as}}
+    router_id {{interfaces.Loopback0.ip}}
+    network {{interfaces.Loopback0.ip}} / {{interfaces.Loopback0.mask}}
+
+{% elif routing_protocol == 'OSPF'%}
+router OSPF {{ospf.pid}}
+    router-id {{ interfaces.Loopback0.ip }}
+    network {{ interfaces.Loopback0.ip }}/{{ interfaces.Loopback0.mask }} area 0
+
+{%- else -%}
+  ip route 0.0.0.0/0 {{ default_nh }}
+{%- endif %}
+
+{# 
+Result would be like this
+hostname router-w-bgp
+ip routing
+
+interface Loopback0
+  ip address 10.0.0.1/32
+
+router bgp 65001
+  router-id 10.0.0.1
+  network 10.0.0.1/32
+#}
+
+
+#################################################################################################################################################
+
+{% macro bool_eval(value) -%}
+{% if value -%}
+True
+{%- else -%}
+False
+{%- endif %}
+{%- endmacro -%}
+
+Tests
+1. Checking varible for its datatypes
+
+{{ hostname }} is an iterable: {{ hostname is iterable }}
+{{ hostname }} is a sequence: {{ hostname is sequence }}
+{{ hostname }} is a string: {{ hostname is string }}
+
+{{ eos_ver }} is a number: {{ eos_ver is number }}
+{{ eos_ver }} is an integer: {{ eos_ver is integer }}
+{{ eos_ver }} is a float: {{ eos_ver is float }}
+
+{{ bgp_as }} is a number: {{ bgp_as is number }}
+{{ bgp_as }} is an integer: {{ bgp_as is integer }}
+{{ bgp_as }} is a float: {{ bgp_as is float }}
+
+{{ interfaces }} is an iterable: {{ interfaces is iterable }}
+{{ interfaces }} is a sequence: {{ interfaces is sequence }}
+{{ interfaces }} is a mapping: {{ interfaces is mapping }}
+
+{{ dns_servers }} is an iterable: {{ dns_servers is iterable }}
+{{ dns_servers }} is a sequence: {{ dns_servers is sequence }}
+{{ dns_servers }} is a mapping: {{ dns_servers is mapping }}
+
+###############################################################################
+# Render variables
+###############################################################################
+
+{
+    "hostname": "sw-office-lon-01",
+    "eos_ver": 4.22,
+    "bgp_as": 65001,
+    "interfaces": {
+        "Ethernet1": "Uplink to core"
+    },
+    "dns_servers": [
+        "1.1.1.1",
+        "8.8.4.4",
+        "8.8.8.8"
+    ]
+}
+
+###############################################################################
+# Rendered template
+###############################################################################
+
+sw-office-lon-01 is an iterable: True
+sw-office-lon-01 is a sequence: True
+sw-office-lon-01 is a string: True
+
+4.22 is a number: True
+4.22 is an integer: False
+4.22 is a float: True
+
+65001 is a number: True
+65001 is an integer: True
+65001 is a float: False
+
+{'Ethernet1': 'Uplink to core'} is an iterable: True
+{'Ethernet1': 'Uplink to core'} is a sequence: True
+{'Ethernet1': 'Uplink to core'} is a mapping: True
+
+['1.1.1.1', '8.8.4.4', '8.8.8.8'] is an iterable: True
+['1.1.1.1', '8.8.4.4', '8.8.8.8'] is a sequence: True
+['1.1.1.1', '8.8.4.4', '8.8.8.8'] is a mapping: False
+
+
+#############################################################################################################
+
+Number, Float, Integer - these work just as expected, so choose whatever fits your use case.
+
+Strings - it's enough to use string test:
+
+{{ my_string is string }}
+
+Dictionary - using mapping test is sufficient:
+{{ my_dict is mapping }}
+
+Lists - this is a tough one, full check should tests if variable is a sequence but at the same time it cannot be a mapping or a string:
+{{ my_list is sequence and my list is not mapping and my list is not string }}

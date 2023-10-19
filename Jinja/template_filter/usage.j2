@@ -1,0 +1,353 @@
+https://jinja.palletsprojects.com/en/2.11.x/templates/#builtin-filters
+https://jinja.palletsprojects.com/en/2.11.x/api/#custom-filters
+https://github.com/progala/ttl255.com/tree/master/jinja2/jinja-tutorial-p4-template-filters
+
+Batch
+    batch(value, linecount, fill_with=None)
+    - Allows you to group list elements into multiple buckets, each containing up to n elements, where n is number we specify.
+    
+    Data :
+        sflow_boxes:
+        - 10.180.0.1
+        - 10.180.0.2
+        - 10.180.0.3
+        - 10.180.0.4
+        - 10.180.0.5
+
+    {% for i in  sflow_boxes|batch(2) %}
+    Sflow group{{ loop.index }}: {{ i | join(', ') }}
+    {% endfor %}
+
+    Result:
+        Sflow group1: 10.180.0.1, 10.180.0.2
+        Sflow group2: 10.180.0.3, 10.180.0.4
+        Sflow group3: 10.180.0.5
+
+Center
+    center(value, width=80)
+    - Centers value in a field of given width by adding space padding. Handy when adding formatting to reporting.
+
+    Data:
+        hosts:
+        - 10.160.0.7
+        - 10.160.0.9
+        - 10.160.0.3
+
+    {{ '-- Discovered hosts --' | center }}
+    {{ hosts | join('\n') }}
+
+    Results:
+        10.160.0.7
+        10.160.0.9
+        10.160.0.15
+            
+Default
+    default(value, default_value='', boolean=False)
+     - Returns default value if passed variable is not specified. Useful for guarding against undefined variables. Can also be used for     optional attribute that we want to set to sane value as a default.
+
+    Data:
+        interfaces:
+        - name: Ethernet1
+            vlan: 50
+        - name: Ethernet2
+            vlan: 50
+        - name: Ethernet3
+        - name: Ethernet4
+
+    {% for intf in interfaces %}
+        interface {{ intf.name }}
+        switchport mode access
+        switchport access vlan {{ intf.vlan | default('10') }}
+    {% endfor %}
+
+    Results:
+        interface Ethernet1
+        switchport mode access
+        switchport access vlan 50
+        interface Ethernet2
+        switchport mode access
+        switchport access vlan 50
+        interface Ethernet3
+        switchport mode access
+        switchport access vlan 10
+        interface Ethernet4
+        switchport mode access
+        switchport access vlan 10
+
+
+Dictsort
+    dictsort(value, case_sensitive=False, by='key', reverse=False)
+     - Allows us to sort dictionaries as they are not sorted by default in Python. Sorting is done by key by default but you can request sorting by value using attribute by='value'.
+
+    Data:
+        prefix_lists:
+            pl-ntt-out:
+                - permit 10.0.0.0/23
+            pl-zayo-out:
+                - permit 10.0.1.0/24
+            pl-cogent-out:
+                - permit 10.0.0.0/24
+
+    {% for pl_name, pl_lines in prefix_lists | dictsort %}
+        ip prefix list {{ pl_name }}
+        {{ pl_lines | join('\n') }}
+    {% endfor %}
+
+    Results:
+        ip prefix list pl-cogent-out
+        permit 10.0.0.0/24
+        ip prefix list pl-ntt-out
+        permit 10.0.0.0/23
+        ip prefix list pl-zayo-out
+        permit 10.0.1.0/24
+
+    BGP peers by priority
+
+    {% for peer, priority in peer_priority | dictsort(by='value', reverse=true) %}
+    Peer: {{ peer }}; priority: {{ priority }}
+    {% endfor %}
+
+
+Float
+    float(value, default=0.0)
+     - Converts the value to float number. Numeric values in API responses sometimes come as strings. With float we can make sure string is converted before making comparison.
+
+    Data:
+        eos_ver: "4.10"
+
+    {% if eos_ver | float >= 4.22 %}
+        Detected EOS ver {{ eos_ver }}, using new command syntax.
+    {% else %}
+         Detected EOS ver {{ eos_ver }}, using old command syntax.
+    {% endif %}
+
+    Results:
+        Detected EOS ver 4.10, using old command syntax.
+
+Int
+    int(value, default=0, base=10)
+     - Same as float but here we convert value to integer. Can be also used for converting other bases into decimal base:
+    
+    Data:
+        lldp_ethertype: 88CC
+
+    LLDP Ethertype
+    hex: {{ lldp_ethertype }} 
+    dec: {{ lldp_ethertype | int(base=16) }}
+
+    Results:
+        LLDP Ethertype
+        hex: 88CC 
+        dec: 35020
+
+Groupby
+    groupby(value, attribute)
+     - Used to group objects based on one of the attributes. You can choose to group by nested attribute using dot notation. This filter can be used for reporting based on feature value or selecting items for an operation that is only applicable to a subset of objects.
+    
+    Data:
+        interfaces:
+            - name: Ethernet1
+              vlan: 50
+            - name: Ethernet2
+              vlan: 50
+            - name: Ethernet3
+              vlan: 50
+            - name: Ethernet4
+              vlan: 60
+
+    {% for vid, vname in interfaces | groupby(attribute='vlan') %}
+        Interfaces in vlan {{vid}}: {{vname | map(attribute = 'name') | join(', ') }}
+    {% endfor %}
+
+    Results:
+        Interfaces in vlan 50: Ethernet1, Ethernet2, Ethernet3
+        Interfaces in vlan 60: Ethernet4
+
+Join
+    join(value, d='', attribute=None)
+    - Very, very useful filter. Takes elements of the sequence and returns concatenated elements as a string.
+    
+    Data:
+        name_servers:
+            - 1.1.1.1
+            - 8.8.8.8
+            - 9.9.9.9
+            - 8.8.4.4
+
+    ip name-server {{name_servers | join(" ")}}
+
+    Results:
+        ip name-server 1.1.1.1 8.8.8.8 9.9.9.9 8.8.4.4
+
+Map
+    map(*args, **kwargs)
+    - Can be used to look up an attribute or apply filter on all objects in the sequence.
+    For instance if you want to normalize letter casing across device names you could apply filter in one go.
+    
+    Data:
+        devices:
+        - Core-rtr-warsaw-01
+        - DIST-Rtr-Prague-01
+        - iNET-rtR-berlin-01
+
+    Name-normalized device list:
+    {{ devices | map('lower') | join('\n')}}
+
+    Results:
+        Name-normalized device list:
+        core-rtr-warsaw-01
+        dist-rtr-prague-01
+        Inet-rtr-berlin-01
+
+    useful for retrieving attributes and their values across a large number of objects.
+
+    Data:
+        interfaces:
+            - name: Ethernet1
+                mode: switched
+            - name: Ethernet2
+                mode: switched
+            - name: Ethernet3
+                mode: routed
+            - name: Ethernet4
+                mode: switched
+
+    Interfaces found:
+    {{ interfaces | map(attribute='name') | join('\n') }}
+
+    Results:
+        Interfaces found:
+            Ethernet1
+            Ethernet2
+            Ethernet3
+            Ethernet4
+
+
+
+Reject
+    reject(*args, **kwargs)
+    - Filters sequence of items by applying a Jinja2 test and rejecting objects succeeding the test. That is item will be removed from the final list if result of the test is true.
+    
+    Data:
+        as_numbers:
+            - 1794
+            - 28910
+            - 65203
+            - 64981
+            - 65099
+
+    {% for no in as_numbers | reject('gt', 64495) %}
+    {{no}}
+    {% endfor %}
+
+    Results:
+        Public BGP AS numbers:
+            1794
+            28910
+
+
+Rejectattr
+    rejectattr(*args, **kwargs)
+    - Same as reject filter but test is applied to the selected attribute of the object.
+    If your chosen test takes arguments, provide them after test name, separated by commas.
+    
+    Data:
+        interfaces:
+        - name: Ethernet1
+            mode: switched
+        - name: Ethernet2
+            mode: switched
+        - name: Ethernet3
+            mode: routed
+        - name: Ethernet4
+            mode: switched
+
+    {% for intf in interfaces | rejectattr('mode', 'eq', 'switched') %}
+        {{intf.name}} - {{intf.mode}}
+
+    Results:
+        Routed interfaces:
+
+            Ethernet3 - routed
+
+
+Select
+    select(*args, **kwargs)
+    Filters the sequence by retaining only the elements passing the Jinja2 test. 
+    This filter is the opposite of reject. You can use either of those depending on what feels more natural in given scenario.
+    
+    Data:
+        as_numbers:
+            - 1794
+            - 28910
+            - 65203
+            - 64981
+            - 65099
+
+    {% for no in as_numbers | select('gt',64495) %}
+        Private BGP AS numbers : 
+        {{no | join('\n')}}
+    {% endfor %}
+
+    Results:
+        Private BGP AS numbers:
+                65203
+                64981
+                65099
+
+Tojson
+    tojson(value, indent=None)
+    - Dumps data structure in JSON format. Useful when rendered template is consumed by application expecting JSON. 
+    Can be also used as an alternative to pprint for prettifying variable debug output.
+    
+    Data:
+       interfaces:
+        - name: Ethernet1
+            vlan: 50
+        - name: Ethernet2
+            vlan: 50
+        - name: Ethernet3
+            vlan: 50
+        - name: Ethernet4
+            vlan: 60
+
+    {{ interfaces | tojson(indent=2) }}
+
+    Results:
+       [
+            {
+                "name": "Ethernet1",
+                "vlan": 50
+            },
+            {
+                "name": "Ethernet2",
+                "vlan": 50
+            },
+            {
+                "name": "Ethernet3",
+                "vlan": 50
+            },
+            {
+                "name": "Ethernet4",
+                "vlan": 60
+            }
+        ]
+
+Unique
+    unique(value, case_sensitive=False, attribute=None)
+    - Returns list of unique values in given collection. Pairs well with map filter for finding set of values used for given attribute.
+    
+    Data:
+       interfaces:
+        - name: Ethernet1
+            vlan: 50
+        - name: Ethernet2
+            vlan: 50
+        - name: Ethernet3
+            vlan: 50
+        - name: Ethernet4
+            vlan: 60
+
+    Access vlans in use: {{ interfaces | map(attribute='vlan') | unique | join(', ') }}
+    Results:
+       Access vlans in use: 50, 60

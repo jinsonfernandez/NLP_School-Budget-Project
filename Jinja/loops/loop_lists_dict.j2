@@ -1,0 +1,62 @@
+PL_AS_65003_IN:
+  - permit 10.96.0.0/24
+  - permit 10.97.11.0/24
+  - permit 10.99.15.0/24
+  - permit 10.100.5.0/25
+  - permit 10.100.6.128/25
+
+# Configuring Prefix List
+ip prefix-list PL_AS_65003_IN
+{%- for line in PL_AS_65003_IN %}
+    {{line -}}
+{%endfor %}
+
+#############################################################################################################################################
+# Looping Over Dictionaries
+
+interfaces:
+  - Ethernet1:
+      description: leaf01-eth51
+      ipv4_address: 10.50.0.0/31
+  - Ethernet2:
+      description: leaf02-eth51
+      ipv4_address: 10.50.0.2/31
+
+{% for intf in interfaces %}
+    description {{ interfaces[intf].description }}
+    ip_address {{ interfaces[intf].ipv4_address }}
+{% endfor %}
+
+
+{% for k, v in interfaces.items() %}
+    interfaces {{k}}
+    description {{v.description}}
+    ip address {{v.ipv4_address}}
+{% endfor %}
+
+
+
+prefix_lists:
+  PL_AS_65003_IN:
+    - permit 10.96.0.0/24
+    - permit 10.97.11.0/24
+    - permit 10.99.15.0/24
+    - permit 10.100.5.0/25
+    - permit 10.100.6.128/25
+
+# Configuring Prefix List
+{% for pl_name, pl_value in  prefix_lists.items() - %}
+    prefix_name {{pl_name}}
+    {%-  for value in pl_value %}
+        {{ value -}}
+    {%% endfor -%}
+{%% endfor %}
+
+
+###############################################################################################################################################
+To Sort by key
+{% for k, v in my_dict | dictsort -%}
+
+To sort by value 
+{% for k, v in my_dict | dictsort(by='value') -%}
+
