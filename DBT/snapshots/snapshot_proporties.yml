@@ -1,0 +1,34 @@
+# Snapshots properties can be declared in .yml files in:
+
+# your snapshots/ directory (as defined by the snapshot-paths config)
+# your models/ directory (as defined by the model-paths config)
+# We recommend that you put them in the snapshots/ directory. You can name these files whatever_you_want.yml, and nest them arbitrarily deeply in subfolders within the snapshots/ or models/ directory.
+
+
+snapshots/<filename>.yml
+version: 2
+
+snapshots:
+  - name: <snapshot name>
+    description: <markdown_string>
+    meta: {<dictionary>}
+    docs:
+      show: true | false
+    config:
+      <snapshot_config>: <config_value>
+    tests:
+      - <test>
+      - ...
+    columns:
+      - name: <column name>
+        description: <markdown_string>
+        meta: {<dictionary>}
+        quote: true | false
+        tags: [<string>]
+        tests:
+          - <test>
+          - ... # declare additional tests
+      - ... # declare properties of additional columns
+
+    - name: ... # declare properties of additional snapshots
+

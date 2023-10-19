@@ -1,0 +1,105 @@
+https://ttl255.com/jinja2-tutorial-part-5-macros/
+
+Syntax: {% macro macro_name(arg1, arg2) %}
+
+```
+Data:
+
+interfaces:
+ - name: Ethernet10
+   role: desktop
+ - name: Ethernet11
+   role: desktop
+ - name: Ethernet15
+   role: printer
+ - name: Ethernet22
+   role: voice
+```
+
+{% macro def_if_desc(if_role) -%}
+Unused port, dedicated to {{ if_role }} devices
+{%- endmacro -%}
+
+{% for intf in interfaces -%}
+interface {{ intf.name }}
+  description {{ def_if_desc(intf.role) }}
+{% endfor -%}
+
+##################################################################################################################################  
+Macros For Deeply Nested Structures
+
+```
+Data :
+
+{
+  "vrfs": {
+      "default": {
+      "routerId": "10.3.0.2",
+      "vrf": "default",
+      "bgpRouteEntries": {
+          "10.1.0.1/32": {
+          "bgpAdvertisedPeerGroups": {},
+          "maskLength": 32,
+          "bgpRoutePaths": [
+              {
+              "asPathEntry": {
+                  "asPathType": null,
+                  "asPath": "i"
+              },
+              "med": 0,
+              "localPreference": 100,
+              "weight": 0,
+              "reasonNotBestpath": null,
+              "nextHop": "10.2.0.0",
+              "routeType": {
+                  "atomicAggregator": false,
+                  "suppressed": false,
+                  "queued": false,
+                  "valid": true,
+                  "ecmpContributor": false,
+                  "luRoute": false,
+                  "active": true,
+                  "stale": false,
+                  "ecmp": false,
+                  "backup": false,
+                  "ecmpHead": false,
+                  "ucmp": false
+              }
+              }
+          ],
+          "address": "10.1.0.1"
+          },
+  ...
+      "asn": "65001"
+      }
+  }
+}
+}
+
+
+# Say we wanted to access just prefix, next-hop and validity of the path.
+# Below is object hierarchy we need to navigate in order to access these values:
+
+# vrfs.default.bgpRouteEntries - prefixes are here (as keys)
+# vrfs.default.bgpRouteEntries[pfx].bgpRoutePaths.0.nextHop - next hop
+# vrfs.default.bgpRouteEntries[pfx].bgpRoutePaths.0.routeType.valid - route validity
+
+{% macro print_route_info(sh_bgpr) -%}
+    {% for route, routenfo in vrfs.default.bgpRouteEntries.items() -%}
+        Route: {{ route }} - Next Hop: {{ 
+        routenfo.bgpRoutePaths.0.nextHop }} - Permitted: {{ 
+        routenfo.bgpRoutePaths.0.routeType.valid }}
+    {% endfor %}
+{%- endmacro -%}
+
+{{ print_route_info(sh_bgp_routes) }}
+
+```
+Output:
+
+Route: 10.1.0.1/32 - Next Hop: 10.2.0.0 - Permitted: True
+Route: 10.1.0.2/32 - Next Hop: 10.2.0.0 - Permitted: True
+Route: 10.1.0.3/32 - Next Hop: 10.2.0.0 - Permitted: True
+
+```
+

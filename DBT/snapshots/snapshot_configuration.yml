@@ -1,0 +1,81 @@
+# https://docs.getdbt.com/reference/snapshot-configs
+===============================================================================================================================
+# 1. Snapshot-specific configurations
+
+# dbt_project.yml
+snapshots:
+  <resource-path>:
+    +target_schema: <string>
+    +target_database: <string>
+    +unique_key: <column_name_or_expression>
+    +strategy: timestamp | check
+    +updated_at: <column_name>
+    +check_cols: [<column_name>] | all
+
+
+
+# config block
+{{ config(
+    target_schema="<string>",
+    target_database="<string>",
+    unique_key="<column_name_or_expression>",
+    strategy="timestamp" | "check",
+    updated_at="<column_name>",
+    check_cols=["<column_name>"] | "all"
+) }}
+
+
+
+
+#===============================================================================================================================
+# 2. General configurations
+
+# dbt_project.yml
+snapshots:
+  <resource-path>:
+    +enabled: true | false
+    +tags: <string> | [<string>]
+    +alias: <string>
+    +pre-hook: <sql-statement> | [<sql-statement>]
+    +post-hook: <sql-statement> | [<sql-statement>]
+    +persist_docs: {<dict>}
+    +grants: {<dict>}
+
+
+
+# snapshots/properties.yml
+version: 2
+
+snapshots:
+  - name: [<snapshot-name>]
+    config:
+      enabled: true | false
+      tags: <string> | [<string>]
+      alias: <string>
+      pre-hook: <sql-statement> | [<sql-statement>]
+      post-hook: <sql-statement> | [<sql-statement>]
+      persist_docs: {<dict>}
+      grants: {<dictionary>}
+
+
+# config block
+
+{{ config(
+    enabled=true | false,
+    tags="<string>" | ["<string>"],
+    alias="<string>", 
+    pre_hook="<sql-statement>" | ["<sql-statement>"],
+    post_hook="<sql-statement>" | ["<sql-statement>"]
+    persist_docs={<dict>}
+    grants={<dict>}
+) }}
+
+
+
+# Configuring snapshots
+# Snapshots can be configured in one of three ways:
+
+# Using a config block within a snapshot
+# Using a config resource property in a .yml file
+# From the dbt_project.yml file, under the snapshots: key. To apply a configuration to a snapshot, or directory of snapshots, define the resource path as nested dictionary keys.
+

@@ -1,0 +1,41 @@
+We can pass macros as arguments to other macros
+
+Data used for our example:
+
+networks:
+  - name: quant_server_net
+    prefix: 10.0.0.0/24
+    services:
+      - computing
+
+svc_def:
+  computing:
+    - {ip: 10.90.0.5/32, prot: tcp, port: 5008}
+    - {ip: 10.91.4.0/255.255.255.0, prot: tcp, port: 5009}
+    - {ip: 10.91.6.32/27, prot: tcp, port: 6800}
+
+{% macro ip_w_wc(ip_net) -%}
+{{ ip_net|ipaddr('network') }} {{ ip_net|ipaddr('hostmask')}}
+{%- endmacro -%}
+
+{% macro ip_w_netm(ip_net) -%}
+{{ ip_net|ipaddr('network') }} {{ ip_net|ipaddr('netmask') }}
+{%- endmacro -%}
+
+{% macro ip_w_pfxlen(ip_net) -%}
+{{ ip_net|ipaddr('network/prefix') }}
+{%- endmacro -%}
+
+{% macro acl_lines(aclobj, src_pfx, pfx_fmt) -%}
+{% for line in aclobj %}
+    permit {{ line.prot }} {{ pfx_fmt(src_pfx) }} {{ pfx_fmt(line.ip) }} 
+{%- if line.prot in ['udp', 'tcp'] %} eq {{ line.port }}{% endif -%}
+{% endfor -%}
+{%- endmacro -%}
+
+{% for net in networks -%}
+ip access-list extended al_{{ net.name }}
+{%-  for svc in net.services -%}
+{{ acl_lines(svc_def[svc], net.prefix, ip_w_pfxlen) }}
+{%  endfor -%}
+{% endfor -%}

@@ -1,0 +1,148 @@
+---
+#boolean
+# Are case insensitive on and On means the same and can be used in place of True..
+# refer to yaml_parser.py to check how python parses each value
+foo: True
+bar: False
+device1: On 
+device2: Off 
+devie3: on 
+device4: off 
+monitored: Yes
+nonmonitored: no
+
+# Numbers
+integer: 99
+float: 99.99
+exponential: 1.41e+3
+octal: 0123
+hexadecimal: 0xff
+not_a_number: .NAN
+infinity: .inf
+negative_infinity: -.inf
+
+
+# Strings
+# String can be represented with or without quotes
+# new line character cannot be evaluated without quotes so if writing \n in string quotes should be present
+#multiline string can be represented as a | or as  > Difference is | interprets new line bur > does not
+# to avoid empety line after each line when using multiline just ues |- or >-
+
+string1: 'this is a single quoted string' # this is a single quoted string
+string2: "this is a double quoted string" # this is a double quoted string
+string3: |
+  This is a free-form text
+  It's indicated by a pipe symbol
+string4: "This is a string \n It's separated by a newline character"
+string_with_fold: >-
+  This is a string represented by fold 
+  It does not interprets new line character
+string_with_pipe: |-
+  This is a string with pipe 
+  It does interprets new line character 
+
+
+# NUll
+# null can be represeneted as either null of as ~
+name: null
+age: ~
+
+
+#lists
+list_01: [ 1, 2, 3 ]
+list_02:
+  - 4
+  - 5
+  - 6
+list_03:
+  - "one"
+  - "two"
+  - "three"
+programming_languages:
+  - Python
+  - JavaScript
+  - C
+  - HTML
+  - CSS
+libraries:
+  - React
+  - CSS
+
+# List of dict
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    name: http
+  - port: 443
+    name: https
+  - port: ~
+list_04:
+  - employee_01:
+      name: Vikram
+      age: 26
+      role: DevOps Engineer
+  - employee_02:
+      name: Steven
+  - employee_03:
+
+programming_languages:
+- Python:
+    author: Guido van Rossum
+- JavaScript:
+    author: Brendan Eich
+- C:
+    author: Dennis Ritchie
+libraries:
+- React:
+    popularity: High
+- CSS:
+    popularity: High
+
+
+# Set
+# Duplicate values are ignored
+set_elements: !!set #need to specifically mention as a set using !!set
+  ? 1
+  ? 2
+  ? 2
+  ? Vikram
+  ? DevOps
+  ? Vikram
+
+
+# Anchors and Extension
+
+# YAML Anchors are a feature which lets you identify an item and then refrence it elsewehre in the file 
+# Anchors are created by & sign follwed by alias name 
+# We can use alias later to refrence the value using * sign
+
+services:
+  wordpress:
+    image: wordpress:latest
+    # Here we are creating an anchor and aliasing it as restart_policy
+    restart: &restart_policy always
+    environment: &env_vars
+      app: webservice
+      env: production
+  mysql:
+    image: mysql:3.8
+    # Refrencing the above created anchors
+    restart: *restart_policy
+    environment: *env_vars
+
+
+services:
+  wordpress:
+    image: wordpress:latest
+    restart: &restart_policy always
+    environment: &env_vars
+      app: webservice
+      env: production
+  mysql:
+    image: mysql:3.8
+    restart: *restart_policy
+    environment: 
+      <<: *env_vars
+      type: database
+

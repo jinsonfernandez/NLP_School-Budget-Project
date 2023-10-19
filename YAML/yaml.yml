@@ -1,0 +1,40 @@
+# Sample JSON FIle
+
+{
+  "name": "Jinson",
+  "job": "Data Engineer",
+  "new job": "Senior Analytics Engineer",
+  "Skills": [
+    "Tableau",
+    "Spark",
+    "DBT",
+    "BigQuery"
+  ],
+  "languages": {
+    "Python": "Elite"
+    "Go": "Advanced"
+    "SQL": "Pro"
+    },
+  "education": "This is a free form text of education that can be entered"
+}
+
+# Converting above JSON to YAML format
+--- # should start with 3 dashes but is optional
+name: Jinson
+job: Data Engineer
+new job: Senior Analytics Engineer
+# List are always indented with dashes
+skills:
+  - Tableau
+  - Spark 
+  - DBT
+  - BigQuery 
+# Nested Dictionary are intended with spaces
+languages:
+  Python: Elite 
+  Go: Advanced 
+  SQL: Pro
+#Multiline string is indetifiied by a |
+education: |
+  This is a free form 
+  text of education that can be entered.

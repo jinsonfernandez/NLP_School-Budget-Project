@@ -1,0 +1,103 @@
+https://docs.getdbt.com/reference/seed-configs
+# ================================================================================================================================
+
+# 1. Seed-specific configurations
+
+# Project file
+# dbt_project.yml
+seeds:
+  <resource-path>:
+    +quote_columns: true | false
+    +column_types: {column_name: datatype}
+    +delimiter: <string>
+
+# seeds/properties.yml
+version: 2
+
+seeds:
+  - name: [<seed-name>]
+    config:
+      quote_columns: true | false
+      column_types: {column_name: datatype}
+      delimiter: <string>
+
+# ================================================================================================================================
+
+# 2. General configurations
+
+# Project File
+# dbt_project.yml
+seeds:
+  <resource-path>:
+    +enabled: true | false
+    +tags: <string> | [<string>]
+    +pre-hook: <sql-statement> | [<sql-statement>]
+    +post-hook: <sql-statement> | [<sql-statement>]
+    +database: <string>
+    +schema: <string>
+    +alias: <string>
+    +persist_docs: <dict>
+    +full_refresh: <boolean>
+    +meta: {<dictionary>}
+    +grants: {<dictionary>}
+
+
+
+# seeds/properties.yml
+version: 2
+
+seeds:
+  - name: [<seed-name>]
+    config:
+      enabled: true | false
+      tags: <string> | [<string>]
+      pre-hook: <sql-statement> | [<sql-statement>]
+      post-hook: <sql-statement> | [<sql-statement>]
+      database: <string>
+      schema: <string>
+      alias: <string>
+      persist_docs: <dict>
+      full_refresh: <boolean>
+      meta: {<dictionary>}
+      grants: {<dictionary>}
+
+
+# ================================================================================================================================
+# To apply a configuration to all seeds in your project only (i.e. excluding any seeds in installed packages), provide your project name as part of the resource path.
+
+# For a project named jaffle_shop:
+
+# dbt_project.yml
+
+seeds:
+  jaffle_shop:
+    +schema: seed_data
+
+
+
+# Apply the schema configuration to one seed only
+version: 2
+
+seeds:
+  - name: utm_parameters
+    config:
+      schema: seed_data
+
+
+# Example seed configuration
+# dbt_project.yml
+
+name: jaffle_shop
+...
+seeds:
+  jaffle_shop:
+    +enabled: true
+    +schema: seed_data
+    # This configures seeds/country_codes.csv
+    country_codes:
+      # Override column types
+      +column_types:
+        country_code: varchar(2)
+        country_name: varchar(32)
+    marketing:
+      +schema: marketing # this will take precedence

@@ -1,0 +1,68 @@
+Seeds are CSV files in your dbt project (typically in your seeds directory), that dbt can load into your data warehouse using the dbt seed command.
+
+Seeds can be referenced in downstream models the same way as referencing models — by using the ref function.
+
+Because these CSV files are located in your dbt repository, they are version controlled and code reviewable. Seeds are best suited to static data which changes infrequently.
+
+Good use-cases for seeds:
+
+A list of mappings of country codes to country names
+A list of test emails to exclude from analysis
+A list of employee account IDs
+Poor use-cases of dbt seeds:
+
+Loading raw data that has been exported to CSVs
+Any kind of production data containing sensitive information. For example personal identifiable information (PII) and passwords.
+
+
+
+
+Example
+To load a seed file in your dbt project:
+
+Add the file to your seeds directory, with a .csv file extension, e.g. seeds/country_codes.csv
+seeds/country_codes.csv
+country_code,country_name
+US,United States
+CA,Canada
+GB,United Kingdom
+...
+
+Run the dbt seed command — a new table will be created in your warehouse in your target schema, named country_codes
+$ dbt seed
+
+
+Refer to seeds in downstream models using the ref function.
+models/orders.sql
+-- This refers to the table created from seeds/country_codes.csv
+select * from {{ ref('country_codes') }}
+
+=============================================================================================================================
+The columns of my seed changed, and now I get an error when running the `seed` command, what should I do?
+In this case, you should rerun the command with a --full-refresh flag, like so:
+
+dbt seed --full-refresh
+
+
+
+
+How do I preserve leading zeros in a seed?
+If you need to preserve leading zeros (for example in a zipcode or mobile number):
+
+v0.16.0 onwards: Include leading zeros in your seed file, and use the column_types configuration with a varchar datatype of the correct length.
+Prior to v0.16.0: Use a downstream model to pad the leading zeros using SQL, for example: lpad(zipcode, 5, '0')
+
+
+
+
+
+How do I build one seed at a time?
+$ dbt seed --select country_codes
+
+
+
+Do hooks run with seeds?
+Yes! The following hooks are available:
+
+pre-hooks & post-hooks
+on-run-start & on-run-end hooks

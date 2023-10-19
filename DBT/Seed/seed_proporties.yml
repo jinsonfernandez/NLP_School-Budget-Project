@@ -1,0 +1,26 @@
+seeds/<filename>.yml
+version: 2
+
+seeds:
+  - name: <string>
+    description: <markdown_string>
+    docs:
+      show: true | false
+    config:
+      <seed_config>: <config_value>
+    tests:
+      - <test>
+      - ... # declare additional tests
+    columns:
+      - name: <column name>
+        description: <markdown_string>
+        meta: {<dictionary>}
+        quote: true | false
+        tags: [<string>]
+        tests:
+          - <test>
+          - ... # declare additional tests
+
+      - name: ... # declare properties of additional columns
+
+  - name: ... # declare properties of additional seeds

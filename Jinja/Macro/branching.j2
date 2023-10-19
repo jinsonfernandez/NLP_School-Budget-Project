@@ -1,0 +1,64 @@
+Data:
+interfaces:
+  Ethernet1:
+    ip_add: 10.1.1.1/31
+    peer: spine1
+    peer_intf: Ethernet1
+  Ethernet2:
+    ip_add: 10.1.1.9/31
+    peer: spine2
+    peer_intf: Ethernet1
+
+bgp:
+  as_no: 65001
+  peers:
+    - intf: Ethernet1
+      as_no: 64512
+    - intf: Ethernet2
+      as_no: 64512
+
+Using this data model we want to build config for BGP neighbors. 
+**Taking advantage of ipaddr filter we can do the following:**
+
+Find 1st IP address in network configured on the linked interface.
+Check if 1st IP address equals IP address configured on the interface.
+If it is equal then IP of BGP peer must be the 2nd IP address in this /31.
+If not then BGP peer IP must be the 1st IP address.
+
+{% set our_ip = '1.2.3.4' %}
+
+router bgp {{ bgp.as_no }}
+{% for peer in bgp.peers %}
+    {% set first_ip = interfaces[peer.intf].ip_add | ipaddr(0) %}
+    {% if our_ip == fst_ip -%}
+        {% set peer_ip = fst_ip | ipaddr(1) | ipaddr('address') -%}
+    {% else -%}
+        {% set peer_ip = fst_ip | ipaddr('address') -%}
+    {% endif %}
+
+    neighbor {{ peer_ip }} remote-as {{ peer.as_no }}
+    neighbor {{ peer_ip }} description {{ interfaces[peer.intf].peer }}
+
+{% endfor %}
+
+
+converting the above code to a macro
+
+{% macro peer_ip(local_intf) %}
+    {% set local_ip = interfaces[local_intf].ip_add -%}
+    {% set fst_ip = local_ip | ipaddr(0) -%}
+    {% if fst_ip == local_ip -%}
+        {{ fst_ip | ipaddr(1) | ipaddr('address') -}}
+    {% else -%}
+        {{ fst_ip | ipaddr('address') -}}
+    {%- endif -%}
+{% endmacro -%}
+
+
+router bgp {{ bgp.as_no }}
+{%- for peer in bgp.peers -%}
+    #calling the macro here
+    {%- set bgp_peer_ip = peer_ip(peer.intf) %}  
+    neighbor {{ bgp_peer_ip }} remote-as {{ peer.as_no }}
+    neighbor {{ bgp_peer_ip }} description {{ interfaces[peer.intf].peer }}
+{%- endfor %}
